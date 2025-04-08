@@ -21,11 +21,6 @@ public sealed class CameraController : MonoBehaviour
 
     void OnDragging(float2 delta)
     {
-        var area = _ui.rootVisualElement;
-        var height = area.resolvedStyle.height;
-
-        delta /= height;
-
         var rot = (float3)_pivotNode.localEulerAngles;
         var limit = math.float2(40, 60);
         rot.xy = (rot.xy + 180) % 360 - 180;
@@ -35,11 +30,8 @@ public sealed class CameraController : MonoBehaviour
 
     void OnScrolling(float delta)
     {
-        var area = _ui.rootVisualElement;
-        var height = area.resolvedStyle.height;
-
         var dist = _distanceNode.localPosition.z;
-        dist = math.clamp(dist + 4 * delta / height, -8, -2);
+        dist = math.clamp(dist + 4 * delta, -8, -2);
         _distanceNode.localPosition = new float3(0, 0, dist);
     }
 }
@@ -62,6 +54,7 @@ public class DragDetector : PointerManipulator
         target.RegisterCallback<PointerDownEvent>(OnPointerDown);
         target.RegisterCallback<PointerMoveEvent>(OnPointerMove);
         target.RegisterCallback<PointerUpEvent>(OnPointerUp);
+        target.RegisterCallback<WheelEvent>(OnWheelScrolled);
     }
 
     protected override void UnregisterCallbacksFromTarget()
@@ -69,6 +62,7 @@ public class DragDetector : PointerManipulator
         target.UnregisterCallback<PointerDownEvent>(OnPointerDown);
         target.UnregisterCallback<PointerMoveEvent>(OnPointerMove);
         target.UnregisterCallback<PointerUpEvent>(OnPointerUp);
+        target.UnregisterCallback<WheelEvent>(OnWheelScrolled);
     }
 
     void OnPointerDown(PointerDownEvent e)
@@ -107,6 +101,9 @@ public class DragDetector : PointerManipulator
         else
             return;
 
+        var style = target.resolvedStyle;
+        delta /= math.min(style.width, style.height);
+
         if (_p1.id < 0 || _p2.id < 0)
             OnDragging?.Invoke(delta);
         else
@@ -127,6 +124,12 @@ public class DragDetector : PointerManipulator
             return;
 
         target.ReleasePointer(id);
+        e.StopPropagation();
+    }
+
+    void OnWheelScrolled(WheelEvent e)
+    {
+        OnScrolling(e.delta.y / -2000);
         e.StopPropagation();
     }
 }
