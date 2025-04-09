@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 using Unity.Mathematics;
+using Klak.Math;
 
 namespace MultiTouchTest {
 
@@ -11,17 +12,29 @@ public sealed class CameraController : MonoBehaviour
     [SerializeField] UIDocument _ui = null;
     [SerializeField] Camera _camera = null;
     [SerializeField] Transform _pivotNode = null;
-    [SerializeField] Transform _distanceNode = null;
+    [SerializeField] Transform _slideNode = null;
 
     #endregion
 
     #region Camera controlling parameters
 
-    [SerializeField] float2 _angleLimit = math.float2(60, 180);
-    [SerializeField] float _angleSpeed = 90;
-    [SerializeField] float2 _distanceLimit = math.float2(3, 6);
-    [SerializeField] float _distanceSpeed = 4;
-    [SerializeField] float2 _fovRange = math.float2(20, 45);
+    [Space]
+    [field:SerializeField] public float RotationSpeed = 2;
+    [field:SerializeField] public float PitchLimit = 1;
+    [Space]
+    [field:SerializeField] public float ZoomSpeed = 0.5f;
+    [field:SerializeField] public float2 DistanceRange = math.float2(3, 6);
+    [Space]
+    [field:SerializeField] public float2 FovRange = math.float2(20, 30);
+    [Space]
+    [field:SerializeField] public float TweenSpeed = 5;
+
+    #endregion
+
+    #region Transform parameters
+
+    float2 _rotation;
+    (float target, float current) _zoom;
 
     #endregion
 
@@ -29,20 +42,13 @@ public sealed class CameraController : MonoBehaviour
 
     void OnDragging(float2 delta)
     {
-        var r = (float3)_pivotNode.localEulerAngles;
-        r.xy = (r.xy + 180) % 360 - 180; // (0, 360) => (-180, 180)
-        r.xy += delta.yx * _angleSpeed;
-        r.xy = math.clamp(r.xy, -_angleLimit, _angleLimit);
-        _pivotNode.localEulerAngles = r;
+        _rotation += delta.yx * RotationSpeed;
+        _rotation.x = math.clamp(_rotation.x, -PitchLimit, PitchLimit);
+        _zoom.target = math.max(_zoom.target, 0.3334f);
     }
 
     void OnScrolling(float delta)
-    {
-        var dist = _distanceNode.localPosition.z;
-        dist += _distanceSpeed * delta;
-        dist = math.clamp(dist, -_distanceLimit.y, -_distanceLimit.x);
-        _distanceNode.localPosition = new float3(0, 0, dist);
-    }
+      => _zoom.target = math.saturate(_zoom.target - ZoomSpeed * delta);
 
     #endregion
 
@@ -53,14 +59,26 @@ public sealed class CameraController : MonoBehaviour
         var drag = new TouchDragManipulator();
         drag.OnDragging += OnDragging;
         drag.OnScrolling += OnScrolling;
+
         _ui.rootVisualElement.AddManipulator(drag);
     }
 
     void Update()
     {
-        var dist = -_distanceNode.localPosition.z;
-        var ndist = (dist - _distanceLimit.x) / (_distanceLimit.y - _distanceLimit.x);
-        _camera.fieldOfView = math.lerp(_fovRange.x, _fovRange.y, ndist);
+        _zoom.current = ExpTween.Step(_zoom.current, _zoom.target, TweenSpeed);
+
+        var amp = math.saturate(_zoom.current * 3);
+
+        if (_zoom.current < 0.05f) _rotation = 0;
+
+        var rot = quaternion.Euler(math.float3(_rotation * amp, 0));
+        _pivotNode.localRotation =
+          ExpTween.Step(_pivotNode.localRotation, rot, TweenSpeed);
+
+        _slideNode.localPosition =
+          math.float3(0, 0, -math.lerp(DistanceRange.x, DistanceRange.y, _zoom.current));
+
+        _camera.fieldOfView = math.lerp(FovRange.x, FovRange.y, _zoom.current);
     }
 
     #endregion
