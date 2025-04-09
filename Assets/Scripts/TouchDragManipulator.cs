@@ -7,16 +7,31 @@ namespace MultiTouchTest {
 
 public class TouchDragManipulator : PointerManipulator
 {
+    #region Public callback events
+
     public event Action<float2> OnDragging;
     public event Action<float> OnScrolling;
+
+    #endregion
+
+    #region Touch points (up to two points)
+
     (int id, float2 pos) _p1;
     (int id, float2 pos) _p2;
+
+    #endregion
+
+    #region Initialization
 
     public TouchDragManipulator()
     {
         _p1.id = _p2.id = -1;
         activators.Add(new ManipulatorActivationFilter{button = MouseButton.LeftMouse});
     }
+
+    #endregion
+
+    #region Manipulator overrides
 
     protected override void RegisterCallbacksOnTarget()
     {
@@ -34,27 +49,31 @@ public class TouchDragManipulator : PointerManipulator
         target.UnregisterCallback<WheelEvent>(OnWheelScrolled);
     }
 
+    #endregion
+
+    #region Manipulator callbacks
+
     void OnPointerDown(PointerDownEvent e)
     {
         if (!CanStartManipulation(e)) return;
 
         var id = e.pointerId;
-        if (_p1.id == id || _p2.id == id) return;
-
         var pos = math.float3(e.localPosition).xy;
 
+        // Duplication rejection
+        // Happens on touch input devices (iOS/Android.)
+        if (_p1.id == id || _p2.id == id) return;
+
+        // Slot allocation and initialization
         if (_p1.id < 0)
-        {
             _p1 = (id, pos);
-            target.CapturePointer(id);
-            e.StopPropagation();
-        }
         else if (_p2.id < 0)
-        {
             _p2 = (id, pos);
-            target.CapturePointer(id);
-            e.StopPropagation();
-        }
+        else
+            return;
+
+        target.CapturePointer(id);
+        e.StopPropagation();
     }
 
     void OnPointerMove(PointerMoveEvent e)
@@ -63,6 +82,7 @@ public class TouchDragManipulator : PointerManipulator
         var pos = math.float3(e.localPosition).xy;
         float2 delta;
 
+        // Delta amount calculation and state update
         if (_p1.id == id)
             (_p1.pos, delta) = (pos, pos - _p1.pos);
         else if (_p2.id == id)
@@ -70,9 +90,11 @@ public class TouchDragManipulator : PointerManipulator
         else
             return;
 
+        // Normalization by the target control size
         var style = target.resolvedStyle;
         delta /= math.min(style.width, style.height);
 
+        // Callback invocation
         if (_p1.id < 0 || _p2.id < 0)
             OnDragging?.Invoke(delta);
         else
@@ -101,6 +123,8 @@ public class TouchDragManipulator : PointerManipulator
         OnScrolling(e.delta.y / -2000);
         e.StopPropagation();
     }
+
+    #endregion
 }
 
 } // namespace MultiTouchTest
