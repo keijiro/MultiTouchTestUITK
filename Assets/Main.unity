@@ -194,7 +194,7 @@ MonoBehaviour:
   _distanceLimit:
     x: 3
     y: 6
-  _distanceSpeed: 1.3
+  _distanceSpeed: 0.8
   _fovRange:
     x: 20
     y: 45
@@ -679,8 +679,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   target: {fileID: 1411473419}
   interpolator: 2
-  positionSpeed: 8
-  rotationSpeed: 8
+  positionSpeed: 10
+  rotationSpeed: 10
 --- !u!114 &1556838693
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -120,7 +120,11 @@ public class TouchDragManipulator : PointerManipulator
 
     void OnWheelScrolled(WheelEvent e)
     {
-        OnScrolling(e.delta.y / -2000);
+        var delta = e.delta.y / -1000;
+#if UNITY_WEBGL && !UNITY_EDITOR
+        delta *= 3;
+#endif
+        OnScrolling(delta);
         e.StopPropagation();
     }
 
