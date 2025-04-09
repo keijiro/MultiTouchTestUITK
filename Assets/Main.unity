@@ -187,6 +187,17 @@ MonoBehaviour:
   _camera: {fileID: 1556838694}
   _pivotNode: {fileID: 1602446956}
   _distanceNode: {fileID: 1411473419}
+  _angleLimit:
+    x: 60
+    y: 180
+  _angleSpeed: 60
+  _distanceLimit:
+    x: 3
+    y: 6
+  _distanceSpeed: 1.3
+  _fovRange:
+    x: 20
+    y: 45
 --- !u!1001 &351653253
 PrefabInstance:
   m_ObjectHideFlags: 0
