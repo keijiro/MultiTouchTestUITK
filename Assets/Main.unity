@@ -668,8 +668,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   target: {fileID: 1411473419}
   interpolator: 2
-  positionSpeed: 6
-  rotationSpeed: 6
+  positionSpeed: 8
+  rotationSpeed: 8
 --- !u!114 &1556838693
 MonoBehaviour:
   m_ObjectHideFlags: 0
