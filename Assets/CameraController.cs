@@ -6,6 +6,7 @@ using System;
 public sealed class CameraController : MonoBehaviour
 {
     [SerializeField] UIDocument _ui = null;
+    [SerializeField] Camera _camera = null;
     [SerializeField] Transform _pivotNode = null;
     [SerializeField] Transform _distanceNode = null;
 
@@ -31,8 +32,14 @@ public sealed class CameraController : MonoBehaviour
     void OnScrolling(float delta)
     {
         var dist = _distanceNode.localPosition.z;
-        dist = math.clamp(dist + 4 * delta, -8, -2);
+        dist = math.clamp(dist + 4 * delta, -5, -2);
         _distanceNode.localPosition = new float3(0, 0, dist);
+    }
+
+    void Update()
+    {
+        var dist = _distanceNode.localPosition.z;
+        _camera.fieldOfView = 20 + (-dist - 2);
     }
 }
 

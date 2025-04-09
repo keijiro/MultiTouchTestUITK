@@ -184,6 +184,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _ui: {fileID: 231048556}
+  _camera: {fileID: 1556838694}
   _pivotNode: {fileID: 1602446956}
   _distanceNode: {fileID: 1411473419}
 --- !u!1001 &351653253
