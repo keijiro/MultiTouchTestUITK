@@ -46,13 +46,19 @@ public sealed class CameraController : MonoBehaviour
     {
         _rotation += delta.yx * RotationSpeed;
         _rotation.x = math.clamp(_rotation.x, -PitchLimit, PitchLimit);
+
+        // Pulling up to the minimum zoom value
         _zoom.target = math.max(_zoom.target, 0.3334f);
+
+        // Not idle
         _idleTime = 0;
     }
 
     void OnScrolling(float delta)
     {
         _zoom.target = math.saturate(_zoom.target - ZoomSpeed * delta);
+
+        // Not idle
         _idleTime = 0;
     }
 
@@ -73,24 +79,32 @@ public sealed class CameraController : MonoBehaviour
     {
         var dt = Time.deltaTime;
 
+        // Zoom-in by timeout
         if ((_idleTime += dt) > DelayToReset)
             _zoom.target = math.saturate(_zoom.target - dt);
 
+        // Smooth zoom
         _zoom.current = ExpTween.Step(_zoom.current, _zoom.target, TweenSpeed);
 
-        var amp = math.saturate(_zoom.current * 3);
-
+        // Rotation reset on full zoom-in
         if (_zoom.current < 0.05f) _rotation = 0;
 
+        // Rotation calculation
         var rot = quaternion.Euler(math.float3(_rotation, 0));
-        rot = math.slerp(quaternion.identity, rot, amp);
-        _pivotNode.localRotation =
-          ExpTween.Step(_pivotNode.localRotation, rot, TweenSpeed);
+        var rot_amp = math.saturate(_zoom.current * 3);
+        rot = math.slerp(quaternion.identity, rot, rot_amp);
+        rot = ExpTween.Step(_pivotNode.localRotation, rot, TweenSpeed);
 
-        _slideNode.localPosition =
-          math.float3(0, 0, -math.lerp(DistanceRange.x, DistanceRange.y, _zoom.current));
+        // Distance calculation
+        var dist = math.lerp(DistanceRange.x, DistanceRange.y, _zoom.current);
 
-        _camera.fieldOfView = math.lerp(FovRange.x, FovRange.y, _zoom.current);
+        // Field of view calculation
+        var fov = math.lerp(FovRange.x, FovRange.y, _zoom.current);;
+
+        // Scene object update
+        _pivotNode.localRotation = rot;
+        _slideNode.localPosition = math.float3(0, 0, -dist);
+        _camera.fieldOfView = fov;
     }
 
     #endregion
