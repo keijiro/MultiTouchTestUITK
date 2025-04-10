@@ -28,13 +28,15 @@ public sealed class CameraController : MonoBehaviour
     [field:SerializeField] public float2 FovRange = math.float2(20, 30);
     [Space]
     [field:SerializeField] public float TweenSpeed = 5;
+    [field:SerializeField] public float DelayToReset = 3;
 
     #endregion
 
-    #region Transform parameters
+    #region Private members
 
     float2 _rotation;
     (float target, float current) _zoom;
+    float _idleTime;
 
     #endregion
 
@@ -45,10 +47,14 @@ public sealed class CameraController : MonoBehaviour
         _rotation += delta.yx * RotationSpeed;
         _rotation.x = math.clamp(_rotation.x, -PitchLimit, PitchLimit);
         _zoom.target = math.max(_zoom.target, 0.3334f);
+        _idleTime = 0;
     }
 
     void OnScrolling(float delta)
-      => _zoom.target = math.saturate(_zoom.target - ZoomSpeed * delta);
+    {
+        _zoom.target = math.saturate(_zoom.target - ZoomSpeed * delta);
+        _idleTime = 0;
+    }
 
     #endregion
 
@@ -65,6 +71,11 @@ public sealed class CameraController : MonoBehaviour
 
     void Update()
     {
+        var dt = Time.deltaTime;
+
+        if ((_idleTime += dt) > DelayToReset)
+            _zoom.target = math.saturate(_zoom.target - dt);
+
         _zoom.current = ExpTween.Step(_zoom.current, _zoom.target, TweenSpeed);
 
         var amp = math.saturate(_zoom.current * 3);
