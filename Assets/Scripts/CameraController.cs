@@ -71,7 +71,8 @@ public sealed class CameraController : MonoBehaviour
 
         if (_zoom.current < 0.05f) _rotation = 0;
 
-        var rot = quaternion.Euler(math.float3(_rotation * amp, 0));
+        var rot = quaternion.Euler(math.float3(_rotation, 0));
+        rot = math.slerp(quaternion.identity, rot, amp);
         _pivotNode.localRotation =
           ExpTween.Step(_pivotNode.localRotation, rot, TweenSpeed);
 
